@@ -22,7 +22,9 @@ body {
 }
 
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -48,6 +50,13 @@ input {
 .hero p {
   margin: 0;
   color: rgba(46, 30, 23, 0.7);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .logout-button,
@@ -88,6 +97,36 @@ input {
   margin-bottom: 24px;
 }
 
+.tab-panel {
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+
+.tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tab-button {
+  border: 1px solid rgba(46, 30, 23, 0.08);
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: rgba(240, 216, 202, 0.55);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.tab-button:hover {
+  transform: translateY(-1px);
+}
+
+.tab-button--active {
+  background: var(--accent);
+  color: white;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -104,12 +143,20 @@ input {
 }
 
 .field input[type="text"],
-.field input[type="file"] {
+.field input[type="file"],
+.field input[type="password"],
+.field textarea,
+.field select {
   width: 100%;
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: white;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 132px;
 }
 
 .checkbox-row {
@@ -122,6 +169,33 @@ input {
   grid-column: 1 / -1;
   display: flex;
   gap: 12px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.section-heading h2,
+.section-heading p,
+.eyebrow {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(46, 30, 23, 0.7);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .feedback {
@@ -173,12 +247,18 @@ th {
 @media (max-width: 840px) {
   .hero,
   .form-grid,
-  .table-actions {
+  .table-actions,
+  .filter-grid,
+  .section-heading {
     display: block;
   }
 
   .hero > * + * {
     margin-top: 16px;
+  }
+
+  .tab-strip > * + * {
+    margin-top: 10px;
   }
 
   .form-grid > * + * {

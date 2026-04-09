@@ -109,3 +109,33 @@ export async function listWishes(req, res) {
     return fail(res, error.message);
   }
 }
+
+export async function deleteWish(req, res) {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `
+        SELECT w.id, w.image_url, w.video_url
+        FROM wishes w
+        JOIN invitations i ON i.id = w.invitation_id
+        WHERE w.id = ? AND i.owner_id = ?
+        LIMIT 1
+      `,
+      [id, req.user.id]
+    );
+    const wish = rows[0];
+
+    if (!wish) {
+      return fail(res, "Không tìm thấy lời chúc", 404);
+    }
+
+    await pool.query("DELETE FROM wishes WHERE id = ?", [id]);
+    deleteIfExists(wish.image_url);
+    deleteIfExists(wish.video_url);
+
+    return ok(res, { id: Number(id) }, "Đã xóa lời chúc");
+  } catch (error) {
+    return fail(res, error.message);
+  }
+}

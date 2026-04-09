@@ -2,6 +2,7 @@ const params = new URLSearchParams(window.location.search);
 const guestName = params.get("name");
 const invitationSlug = params.get("slug");
 const cardContainer = document.getElementById("card-container");
+const cardCover = document.getElementById("card-cover");
 const coverImage = document.getElementById("cover-image");
 const coverFallback = document.getElementById("cover-fallback");
 const insideName = document.getElementById("inside-name");
@@ -35,9 +36,17 @@ let wishMediaRecorder = null;
 let wishRecordedChunks = [];
 let capturedWishVideoFile = null;
 let capturedWishImageFile = null;
+let invitationAssetsReady = false;
 
 function setFeedback(message) {
   cardFeedback.textContent = message;
+}
+
+function setInvitationReadyState(isReady) {
+  invitationAssetsReady = isReady;
+  cardContainer.classList.toggle("is-loading", !isReady);
+  cardCover.classList.toggle("card-cover--disabled", !isReady);
+  downloadCardButton.disabled = !isReady;
 }
 
 function setWishFeedback(message) {
@@ -106,6 +115,9 @@ function endScareSequence() {
   skipScareButton.classList.remove("is-visible");
   document.body.classList.remove("scare-active", "scare-pending");
   scareSequenceCompleted = true;
+  if (!cardContainer.classList.contains("is-open")) {
+    setFeedback("Chạm vào thiệp để mở.");
+  }
   window.appAudio?.resumeMusicAfterPriorityAudio?.();
 }
 
@@ -307,7 +319,7 @@ async function playScareSequence() {
   try {
     await scareVideo.play();
   } catch (error) {
-    setFeedback("Trinh duyet chan phat video scare.");
+    setFeedback("Trình duyệt chặn phát video tự động. Bạn vẫn có thể mở thiệp.");
     endScareSequence();
   }
 }
@@ -315,21 +327,28 @@ async function playScareSequence() {
 async function openCard() {
   if (
     !invitationData ||
+    !invitationAssetsReady ||
     cardContainer.classList.contains("is-open") ||
     isOpening ||
     !scareSequenceCompleted
   ) {
+    if (!invitationAssetsReady) {
+      setFeedback("Thiệp đang được chuẩn bị, vui lòng chờ một chút.");
+    } else if (!scareSequenceCompleted) {
+      setFeedback("Đang phát hiệu ứng mở đầu, vui lòng chờ trong giây lát.");
+    }
     return;
   }
 
   isOpening = true;
   playCardOpenSound();
   finalizeCardOpen();
+  setFeedback("Thiệp đã mở. Bạn có thể tải thiệp hoặc gửi lời chúc bên dưới.");
 }
 
 function downloadInvitationCard() {
   if (!invitationData?.cardImage) {
-    setFeedback("Khong co tep thiep de tai.");
+    setFeedback("Không có tệp thiệp để tải.");
     return;
   }
 
@@ -339,6 +358,20 @@ function downloadInvitationCard() {
   document.body.appendChild(link);
   link.click();
   link.remove();
+  setFeedback("Đang tải thiệp về máy.");
+}
+
+function preloadImage(src) {
+  if (!src) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = resolve;
+    image.onerror = () => reject(new Error("Không tải được ảnh thiệp."));
+    image.src = src;
+  });
 }
 
 async function submitWish(event) {
@@ -407,11 +440,12 @@ updateWishCaptureButtons();
 
 async function loadInvitation() {
   if (!guestName && !invitationSlug) {
-    setFeedback("Thieu thong tin de tai thiep.");
+    setFeedback("Thiếu thông tin để tải thiệp.");
     return;
   }
 
-  setFeedback("Dang tai thiep...");
+  setInvitationReadyState(false);
+  setFeedback("Đang tải thiệp...");
 
   try {
     const query = invitationSlug
@@ -425,10 +459,15 @@ async function loadInvitation() {
     }
 
     invitationData = payload.data;
+    await Promise.all([
+      preloadImage(invitationData.cardImage),
+      preloadImage(invitationData.coverImage)
+    ]);
+
     insideName.textContent = invitationData.name;
     insideNote.textContent =
       invitationData.note ||
-      "Cam on ban da dong hanh trong chang duong tot nghiep. Su hien dien cua ban se la niem vui rat lon trong ngay dac biet nay.";
+      "Cảm ơn bạn đã đồng hành trong chặng đường tốt nghiệp. Sự hiện diện của bạn sẽ là niềm vui rất lớn trong ngày đặc biệt này.";
     cardImage.src = invitationData.cardImage;
 
     if (invitationData.coverImage) {
@@ -441,14 +480,19 @@ async function loadInvitation() {
       coverFallback.hidden = false;
     }
 
-    setFeedback("");
+    setInvitationReadyState(true);
+    setFeedback(invitationData.videoUrl ? "Đang chuẩn bị hiệu ứng mở đầu..." : "Chạm vào thiệp để mở.");
 
     if (invitationData.videoUrl) {
       await playScareSequence();
+      if (scareSequenceCompleted) {
+        setFeedback("Chạm vào thiệp để mở.");
+      }
     } else {
       scareSequenceCompleted = true;
     }
   } catch (error) {
+    setInvitationReadyState(false);
     setFeedback(error.message);
   }
 }

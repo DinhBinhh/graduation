@@ -2,6 +2,8 @@ const bgMusic = document.getElementById("bg-music");
 const musicToggle = document.getElementById("music-toggle");
 const wandTarget = document.getElementById("wand-lottie");
 const wandCorner = document.querySelector(".wand-corner");
+const supportsReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const coarsePointer = window.matchMedia("(hover: none), (pointer: coarse)");
 
 let musicEnabled = false;
 let musicSuppressed = false;
@@ -9,6 +11,25 @@ let pointerMode = false;
 let pointerFrame = null;
 let pointerX = 0;
 let pointerY = 0;
+
+function isLiteEffectsMode() {
+  return coarsePointer.matches || supportsReducedMotion.matches;
+}
+
+function syncEffectsMode() {
+  document.documentElement.classList.toggle("lite-effects", isLiteEffectsMode());
+}
+
+function bindMediaChange(mediaQuery, listener) {
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", listener);
+    return;
+  }
+
+  if (typeof mediaQuery.addListener === "function") {
+    mediaQuery.addListener(listener);
+  }
+}
 
 function updateMusicButton() {
   if (!musicToggle) return;
@@ -72,7 +93,7 @@ function bindFirstInteractionForMusic() {
 }
 
 function initWandAnimation() {
-  if (!wandTarget || !window.lottie) return;
+  if (!wandTarget || !window.lottie || isLiteEffectsMode()) return;
 
   window.lottie.loadAnimation({
     container: wandTarget,
@@ -102,7 +123,7 @@ function handlePointerMove(event) {
 }
 
 function setPointerMode() {
-  const desktop = window.matchMedia("(min-width: 861px)").matches;
+  const desktop = window.matchMedia("(min-width: 861px)").matches && !coarsePointer.matches;
   pointerMode = desktop;
 
   if (!wandCorner) return;
@@ -136,8 +157,14 @@ musicToggle?.addEventListener("click", async () => {
 });
 
 window.addEventListener("load", initWandAnimation);
+window.addEventListener("load", syncEffectsMode);
 window.addEventListener("load", setPointerMode);
 window.addEventListener("resize", setPointerMode);
+bindMediaChange(coarsePointer, () => {
+  syncEffectsMode();
+  setPointerMode();
+});
+bindMediaChange(supportsReducedMotion, syncEffectsMode);
 updateMusicButton();
 enableMusic();
 bindFirstInteractionForMusic();

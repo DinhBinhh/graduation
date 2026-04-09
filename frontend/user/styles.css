@@ -16,6 +16,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: "Georgia", serif;
   color: var(--ink);
   background:
@@ -63,6 +64,11 @@ body::after {
 .card-page {
   position: relative;
   overflow-x: hidden;
+}
+
+.landing-page {
+  min-height: 100dvh;
+  overflow-y: hidden;
 }
 
 .map-wash,
@@ -401,6 +407,18 @@ body::after {
   cursor: none !important;
 }
 
+.admin-dialog-open,
+.admin-dialog-open body,
+.admin-dialog-open dialog,
+.admin-dialog-open input,
+.admin-dialog-open button {
+  cursor: auto !important;
+}
+
+.admin-dialog-open .wand-corner--cursor {
+  opacity: 0;
+}
+
 .wand-corner--cursor {
   position: fixed;
   top: 0;
@@ -442,9 +460,10 @@ body::after {
   width: min(92vw, 1120px);
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 24px 0 36px;
+  padding: 24px 0;
 }
 
 .search-shell {
@@ -588,6 +607,7 @@ body::after {
   border-radius: 24px;
   padding: 0;
   background: transparent;
+  overflow: visible;
 }
 
 .admin-dialog::backdrop {
@@ -636,6 +656,10 @@ body::after {
   animation: cardFloat 4.5s ease-in-out infinite;
 }
 
+.card-container.is-loading {
+  opacity: 0.86;
+}
+
 .card-page.scare-active .card-stage {
   opacity: 0;
   pointer-events: none;
@@ -660,6 +684,10 @@ body::after {
   cursor: pointer;
   z-index: 3;
   will-change: transform;
+}
+
+.card-cover--disabled {
+  cursor: progress;
 }
 
 .card-container.is-open .card-cover {
@@ -1247,5 +1275,44 @@ body::after {
   .skip-scare-button {
     top: max(16px, env(safe-area-inset-top));
     right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  body::after,
+  .arcane-flare,
+  .mist-layers,
+  .shadow-passage,
+  .footprints,
+  .magic-dust,
+  .wand-corner {
+    display: none;
+  }
+
+  .map-wash,
+  .ambient {
+    filter: none;
+    animation: none;
+    opacity: 0.12;
+  }
+
+  .sigil,
+  .map-trail,
+  .search-shell,
+  .search-shell::before,
+  .search-shell h1,
+  .lookup-form,
+  .lookup-form::after,
+  .music-toggle {
+    animation: none;
+  }
+
+  .lookup-form,
+  .music-toggle {
+    backdrop-filter: none;
+  }
+
+  .music-toggle {
+    box-shadow: 0 12px 24px rgba(67, 31, 15, 0.12);
   }
 }

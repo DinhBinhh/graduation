@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import { generateUniqueInvitationSlug } from "./invitationSlug.js";
+import { hashPassword } from "./password.js";
 
 async function hasColumn(tableName, columnName) {
   const [rows] = await pool.query(
@@ -38,21 +39,41 @@ export async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS admins (
       id INT AUTO_INCREMENT PRIMARY KEY,
       username VARCHAR(100) NOT NULL UNIQUE,
-      password_hash VARCHAR(255) NOT NULL
+      password_hash VARCHAR(255) NOT NULL,
+      failed_login_attempts INT NOT NULL DEFAULT 0,
+      locked_until DATETIME NULL
     )
   `);
 
-  await pool.query(`
-    INSERT INTO admins (username, password_hash)
-    VALUES ('admin_demo_1', 'change-me-before-production')
-    ON DUPLICATE KEY UPDATE username = username
-  `);
+  const defaultDemoPasswordHash = hashPassword("change-me-before-production");
 
   await pool.query(`
     INSERT INTO admins (username, password_hash)
-    VALUES ('admin_demo_2', 'change-me-before-production')
+    VALUES ('admin_demo_1', ?)
     ON DUPLICATE KEY UPDATE username = username
-  `);
+  `, [defaultDemoPasswordHash]);
+
+  await pool.query(`
+    INSERT INTO admins (username, password_hash)
+    VALUES ('admin_demo_2', ?)
+    ON DUPLICATE KEY UPDATE username = username
+  `, [defaultDemoPasswordHash]);
+
+  const failedAttemptsExists = await hasColumn("admins", "failed_login_attempts");
+  if (!failedAttemptsExists) {
+    await pool.query(`
+      ALTER TABLE admins
+      ADD COLUMN failed_login_attempts INT NOT NULL DEFAULT 0 AFTER password_hash
+    `);
+  }
+
+  const lockedUntilExists = await hasColumn("admins", "locked_until");
+  if (!lockedUntilExists) {
+    await pool.query(`
+      ALTER TABLE admins
+      ADD COLUMN locked_until DATETIME NULL AFTER failed_login_attempts
+    `);
+  }
 
   const invitationOwnerExists = await hasColumn("invitations", "owner_id");
 

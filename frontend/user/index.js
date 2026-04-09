@@ -5,8 +5,13 @@ const adminDialog = document.getElementById("admin-dialog");
 const adminLoginForm = document.getElementById("admin-login-form");
 const adminFeedback = document.getElementById("admin-feedback");
 const lookupOwner = new URLSearchParams(window.location.search).get("owner")?.trim();
+const inviteSlug = new URLSearchParams(window.location.search).get("invite")?.trim();
 
 let audioContext = null;
+
+function syncAdminDialogState() {
+  document.documentElement.classList.toggle("admin-dialog-open", adminDialog?.open === true);
+}
 
 function setFeedback(element, message) {
   element.textContent = message;
@@ -87,6 +92,7 @@ form.addEventListener("submit", async (event) => {
 
   if (name.toLowerCase() === "admin") {
     adminDialog.showModal();
+    syncAdminDialogState();
     return;
   }
 
@@ -94,6 +100,11 @@ form.addEventListener("submit", async (event) => {
   playLookupSound();
 
   try {
+    if (inviteSlug) {
+      window.location.href = `/card.html?slug=${encodeURIComponent(inviteSlug)}`;
+      return;
+    }
+
     const query = lookupOwner
       ? `name=${encodeURIComponent(name)}&owner=${encodeURIComponent(lookupOwner)}`
       : `name=${encodeURIComponent(name)}`;
@@ -115,6 +126,7 @@ adminLoginForm.addEventListener("submit", async (event) => {
 
   if (action === "cancel") {
     adminDialog.close();
+    syncAdminDialogState();
     setFeedback(adminFeedback, "");
     return;
   }
@@ -129,4 +141,9 @@ adminLoginForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setFeedback(adminFeedback, error.message);
   }
+});
+
+adminDialog?.addEventListener("close", syncAdminDialogState);
+adminDialog?.addEventListener("cancel", () => {
+  window.requestAnimationFrame(syncAdminDialogState);
 });
