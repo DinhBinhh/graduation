@@ -1,24 +1,7 @@
-import fs from "fs";
-import path from "path";
 import pool from "../config/db.js";
 import { deleteIfExists, fileUrl } from "../utils/files.js";
 import { fail, ok } from "../utils/response.js";
-
-function normalizeUploadedWishMedia(file) {
-  if (!file) return null;
-
-  const targetDir = path.join("uploads", "wishes");
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
-
-  const nextRelativePath = path.join(targetDir, path.basename(file.path));
-  if (file.path !== nextRelativePath) {
-    fs.renameSync(file.path, nextRelativePath);
-  }
-
-  return nextRelativePath;
-}
+import { deleteFromCloudinary, uploadToCloudinary } from "../utils/cloudinaryMedia.js";
 
 function mapWish(row) {
   return {
@@ -61,8 +44,8 @@ export async function createWish(req, res) {
       return fail(res, "Invitation not found", 404);
     }
 
-    const wishVideoPath = normalizeUploadedWishMedia(videoFile);
-    const wishImagePath = normalizeUploadedWishMedia(imageFile);
+    const wishVideoPath = videoFile ? await uploadToCloudinary(videoFile.path, "wish-video") : null;
+    const wishImagePath = imageFile ? await uploadToCloudinary(imageFile.path, "wish-image") : null;
 
     const [result] = await pool.query(
       `
@@ -133,6 +116,8 @@ export async function deleteWish(req, res) {
     await pool.query("DELETE FROM wishes WHERE id = ?", [id]);
     deleteIfExists(wish.image_url);
     deleteIfExists(wish.video_url);
+    await deleteFromCloudinary(wish.image_url);
+    await deleteFromCloudinary(wish.video_url);
 
     return ok(res, { id: Number(id) }, "Đã xóa lời chúc");
   } catch (error) {

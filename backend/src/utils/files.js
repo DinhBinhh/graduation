@@ -22,11 +22,15 @@ export function ensureUploadDirectories() {
 
 export function fileUrl(filePath) {
   if (!filePath) return null;
+  if (/^https?:\/\//i.test(filePath)) {
+    return filePath;
+  }
   return `/${filePath.replace(/\\/g, "/")}`;
 }
 
 export function deleteIfExists(relativePath) {
   if (!relativePath) return;
+  if (/^https?:\/\//i.test(relativePath)) return;
 
   const absolutePath = path.join(backendRoot, relativePath);
   if (fs.existsSync(absolutePath)) {

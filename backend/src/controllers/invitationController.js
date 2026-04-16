@@ -1,9 +1,8 @@
-import fs from "fs";
-import path from "path";
 import pool from "../config/db.js";
 import { fail, ok } from "../utils/response.js";
 import { deleteIfExists, fileUrl } from "../utils/files.js";
 import { generateUniqueInvitationSlug } from "../utils/invitationSlug.js";
+import { deleteFromCloudinary, uploadToCloudinary } from "../utils/cloudinaryMedia.js";
 
 function mapInvitation(row, ownerUsername = row.owner_username) {
   return {
@@ -20,22 +19,6 @@ function mapInvitation(row, ownerUsername = row.owner_username) {
     publicUrl: row.public_slug ? `/card.html?slug=${encodeURIComponent(row.public_slug)}` : null,
     createdAt: row.created_at
   };
-}
-
-function normalizeUploadedFile(file, fallbackFolder) {
-  if (!file) return null;
-
-  const targetDir = path.join("uploads", fallbackFolder);
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
-
-  const nextRelativePath = path.join(targetDir, path.basename(file.path));
-  if (file.path !== nextRelativePath) {
-    fs.renameSync(file.path, nextRelativePath);
-  }
-
-  return nextRelativePath;
 }
 
 export async function getInvitationByName(req, res) {
@@ -133,9 +116,9 @@ export async function createInvitation(req, res) {
   }
 
   try {
-    const coverImagePath = normalizeUploadedFile(coverFile, "images");
-    const cardImagePath = normalizeUploadedFile(imageFile, "images");
-    const videoPath = normalizeUploadedFile(videoFile, "videos");
+    const coverImagePath = coverFile ? await uploadToCloudinary(coverFile.path, "cover") : null;
+    const cardImagePath = await uploadToCloudinary(imageFile.path, "card");
+    const videoPath = videoFile ? await uploadToCloudinary(videoFile.path, "scare") : null;
     const publicSlug = await generateUniqueInvitationSlug(pool);
 
     const [result] = await pool.query(
@@ -184,11 +167,11 @@ export async function updateInvitation(req, res) {
     }
 
     const nextCoverImage = coverFile
-      ? normalizeUploadedFile(coverFile, "images")
+      ? await uploadToCloudinary(coverFile.path, "cover")
       : (req.body.keepCover === "false" ? null : existing.cover_image);
-    const nextCardImage = imageFile ? normalizeUploadedFile(imageFile, "images") : existing.card_image;
+    const nextCardImage = imageFile ? await uploadToCloudinary(imageFile.path, "card") : existing.card_image;
     const nextVideoUrl =
-      videoFile ? normalizeUploadedFile(videoFile, "videos") : (req.body.keepVideo === "false" ? null : existing.video_url);
+      videoFile ? await uploadToCloudinary(videoFile.path, "scare") : (req.body.keepVideo === "false" ? null : existing.video_url);
 
     await pool.query(
       "UPDATE invitations SET name = ?, note = ?, scare = ?, cover_image = ?, card_image = ?, video_url = ? WHERE id = ?",
@@ -205,18 +188,23 @@ export async function updateInvitation(req, res) {
 
     if (coverFile && existing.cover_image !== nextCoverImage) {
       deleteIfExists(existing.cover_image);
+      await deleteFromCloudinary(existing.cover_image);
     }
     if (req.body.keepCover === "false" && existing.cover_image) {
       deleteIfExists(existing.cover_image);
+      await deleteFromCloudinary(existing.cover_image);
     }
     if (imageFile && existing.card_image !== nextCardImage) {
       deleteIfExists(existing.card_image);
+      await deleteFromCloudinary(existing.card_image);
     }
     if (videoFile && existing.video_url !== nextVideoUrl) {
       deleteIfExists(existing.video_url);
+      await deleteFromCloudinary(existing.video_url);
     }
     if (req.body.keepVideo === "false" && existing.video_url) {
       deleteIfExists(existing.video_url);
+      await deleteFromCloudinary(existing.video_url);
     }
 
     const [rows] = await pool.query(
@@ -260,6 +248,8 @@ export async function deleteInvitation(req, res) {
     for (const wish of wishRows) {
       deleteIfExists(wish.image_url);
       deleteIfExists(wish.video_url);
+      await deleteFromCloudinary(wish.image_url);
+      await deleteFromCloudinary(wish.video_url);
     }
 
     await pool.query("DELETE FROM wishes WHERE invitation_id = ?", [id]);
@@ -267,6 +257,9 @@ export async function deleteInvitation(req, res) {
     deleteIfExists(invitation.cover_image);
     deleteIfExists(invitation.card_image);
     deleteIfExists(invitation.video_url);
+    await deleteFromCloudinary(invitation.cover_image);
+    await deleteFromCloudinary(invitation.card_image);
+    await deleteFromCloudinary(invitation.video_url);
 
     return ok(res, { id: Number(id) }, "Invitation deleted");
   } catch (error) {
