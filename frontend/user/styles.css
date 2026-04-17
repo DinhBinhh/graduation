@@ -860,6 +860,25 @@ body::after {
   justify-content: flex-end;
 }
 
+.more-cards-link {
+  width: min(88vw, 820px);
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: var(--accent-dark);
+}
+
+.more-cards-link a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(141, 75, 34, 0.35);
+}
+
+.more-cards-link a:hover {
+  border-bottom-color: currentColor;
+}
+
 .scare-overlay {
   position: fixed;
   inset: 0;
@@ -1253,6 +1272,11 @@ body::after {
   .wish-panel {
     width: 100%;
     padding: 20px;
+  }
+
+  .more-cards-link {
+    width: 100%;
+    font-size: 0.94rem;
   }
 
   .wish-form__grid {

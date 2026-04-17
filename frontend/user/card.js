@@ -13,7 +13,7 @@ const downloadCardButton = document.getElementById("download-card-button");
 const wishForm = document.getElementById("wish-form");
 const wishSenderNameInput = document.getElementById("wish-sender-name");
 const wishMessageInput = document.getElementById("wish-message");
-const wishVideoInput = document.getElementById("wish-video-input");
+const wishFileInput = document.getElementById("wish-file-input");
 const wishFeedback = document.getElementById("wish-feedback");
 const wishCameraFeedback = document.getElementById("wish-camera-feedback");
 const wishCameraPreview = document.getElementById("wish-camera-preview");
@@ -142,7 +142,7 @@ function clearCapturedWishMedia({ keepCamera = true } = {}) {
   capturedWishVideoFile = null;
   capturedWishImageFile = null;
   wishRecordedChunks = [];
-  wishVideoInput.value = "";
+  wishFileInput.value = "";
   wishImagePreview.hidden = true;
   wishImagePreview.removeAttribute("src");
 
@@ -171,7 +171,7 @@ function stopWishCamera() {
 async function startWishCamera() {
   try {
     if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error("Trinh duyet khong ho tro camera.");
+      throw new Error("Trình duyệt không hỗ trợ camera.");
     }
 
     stopWishCamera();
@@ -185,10 +185,10 @@ async function startWishCamera() {
     wishCameraPreview.srcObject = wishCameraStream;
     wishCameraPreview.hidden = false;
     await wishCameraPreview.play();
-    setWishCameraFeedback("Camera da san sang.");
+    setWishCameraFeedback("Camera đã sẵn sàng.");
     updateWishCaptureButtons();
   } catch (error) {
-    setWishCameraFeedback(error.message || "Khong mo duoc camera.");
+    setWishCameraFeedback(error.message || "Không mở được camera.");
   }
 }
 
@@ -205,7 +205,7 @@ function dataUrlToFile(dataUrl, fileName) {
 
 function captureWishPhoto() {
   if (!wishCameraStream) {
-    setWishCameraFeedback("Hay mo camera truoc khi chup hinh.");
+    setWishCameraFeedback("Hãy mở camera trước khi chụp hình.");
     return;
   }
 
@@ -220,7 +220,7 @@ function captureWishPhoto() {
   capturedWishVideoFile = null;
   wishImagePreview.src = dataUrl;
   wishImagePreview.hidden = false;
-  setWishCameraFeedback("Da chup hinh. Ban co the gui ngay bay gio.");
+  setWishCameraFeedback("Đã chụp hình. Bạn có thể gửi ngay bây giờ.");
   updateWishCaptureButtons();
 }
 
@@ -237,12 +237,12 @@ function getSupportedWishVideoMimeType() {
 
 function startWishRecording() {
   if (!wishCameraStream) {
-    setWishCameraFeedback("Hay mo camera truoc khi quay video.");
+    setWishCameraFeedback("Hãy mở camera trước khi quay video.");
     return;
   }
 
   if (!window.MediaRecorder) {
-    setWishCameraFeedback("Trinh duyet khong ho tro quay video truc tiep.");
+    setWishCameraFeedback("Trình duyệt không hỗ trợ quay video trực tiếp.");
     return;
   }
 
@@ -264,7 +264,7 @@ function startWishRecording() {
 
   wishMediaRecorder.addEventListener("stop", () => {
     if (!wishRecordedChunks.length) {
-      setWishCameraFeedback("Khong ghi duoc video.");
+      setWishCameraFeedback("Không ghi được video.");
       updateWishCaptureButtons();
       return;
     }
@@ -272,13 +272,13 @@ function startWishRecording() {
     const type = wishRecordedChunks[0].type || mimeType || "video/webm";
     const extension = type.includes("mp4") ? "mp4" : "webm";
     capturedWishVideoFile = new File(wishRecordedChunks, `wish-video-${Date.now()}.${extension}`, { type });
-    setWishCameraFeedback("Da quay video xong. Ban co the gui ngay bay gio.");
+    setWishCameraFeedback("Đã quay video xong. Bạn có thể gửi ngay bây giờ.");
     updateWishCaptureButtons();
   });
 
   capturedWishVideoFile = null;
   wishMediaRecorder.start();
-  setWishCameraFeedback("Dang quay video...");
+  setWishCameraFeedback("Đang quay video...");
   updateWishCaptureButtons();
 }
 
@@ -346,19 +346,42 @@ async function openCard() {
   setFeedback("Thiệp đã mở. Bạn có thể tải thiệp hoặc gửi lời chúc bên dưới.");
 }
 
-function downloadInvitationCard() {
+async function downloadInvitationCard() {
   if (!invitationData?.cardImage) {
     setFeedback("Không có tệp thiệp để tải.");
     return;
   }
 
-  const link = document.createElement("a");
-  link.href = invitationData.cardImage;
-  link.download = `${(invitationData.name || "thiep").replace(/\s+/g, "-").toLowerCase()}-invitation`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setFeedback("Đang tải thiệp về máy.");
+  const safeName = `${(invitationData.name || "thiep").replace(/\s+/g, "-").toLowerCase()}-invitation.jpg`;
+
+  try {
+    setFeedback("Đang chuẩn bị tệp tải về...");
+    const response = await fetch(invitationData.cardImage, { mode: "cors" });
+
+    if (!response.ok) {
+      throw new Error("Không tải được tệp thiệp.");
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = safeName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+    setFeedback("Đã bắt đầu tải thiệp về máy.");
+  } catch (error) {
+    const fallbackLink = document.createElement("a");
+    fallbackLink.href = invitationData.cardImage;
+    fallbackLink.target = "_blank";
+    fallbackLink.rel = "noreferrer";
+    document.body.appendChild(fallbackLink);
+    fallbackLink.click();
+    fallbackLink.remove();
+    setFeedback(error.message || "Không tải trực tiếp được, mình đã mở ảnh ở tab mới để bạn lưu.");
+  }
 }
 
 function preloadImage(src) {
@@ -374,11 +397,25 @@ function preloadImage(src) {
   });
 }
 
+function detectSelectedMediaKind(file) {
+  if (!file) return null;
+
+  const mimeType = file.type?.toLowerCase() || "";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("image/")) return "image";
+
+  const fileName = file.name?.toLowerCase() || "";
+  if (/\.(mp4|mov|webm|m4v|3gp|ogg)$/i.test(fileName)) return "video";
+  if (/\.(jpg|jpeg|png|webp|heic|heif)$/i.test(fileName)) return "image";
+
+  return null;
+}
+
 async function submitWish(event) {
   event.preventDefault();
 
   if (!invitationData?.publicSlug) {
-    setWishFeedback("Khong tim thay ma thiep de gui loi chuc.");
+    setWishFeedback("Không tìm thấy mã thiệp để gửi lời chúc.");
     return;
   }
 
@@ -387,8 +424,15 @@ async function submitWish(event) {
   formData.append("senderName", wishSenderNameInput.value.trim());
   formData.append("message", wishMessageInput.value.trim());
 
-  const wishVideoFile = capturedWishVideoFile || wishVideoInput.files?.[0];
-  const wishImageFile = capturedWishImageFile;
+  const selectedFile = wishFileInput.files?.[0] || null;
+  const selectedMediaKind = detectSelectedMediaKind(selectedFile);
+  const wishVideoFile =
+    capturedWishVideoFile ||
+    (selectedMediaKind === "video" ? selectedFile : null);
+  const wishImageFile =
+    capturedWishImageFile ||
+    (selectedMediaKind === "image" ? selectedFile : null);
+
   if (wishVideoFile) {
     formData.append("wishVideo", wishVideoFile);
   }
@@ -396,7 +440,12 @@ async function submitWish(event) {
     formData.append("wishImage", wishImageFile);
   }
 
-  setWishFeedback("Dang gui loi chuc...");
+  if (!wishVideoFile && !wishImageFile && !wishMessageInput.value.trim()) {
+    setWishFeedback("Vui lòng chọn ảnh, video hoặc nhập lời chúc.");
+    return;
+  }
+
+  setWishFeedback("Đang gửi lời chúc...");
 
   try {
     const response = await fetch("/api/wishes", {
@@ -406,12 +455,12 @@ async function submitWish(event) {
     const payload = await response.json();
 
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || "Gui loi chuc that bai.");
+      throw new Error(payload.message || "Gửi lời chúc thất bại.");
     }
 
     wishForm.reset();
     clearCapturedWishMedia({ keepCamera: true });
-    setWishFeedback("Da gui loi chuc thanh cong.");
+    setWishFeedback("Đã gửi lời chúc thành công.");
   } catch (error) {
     setWishFeedback(error.message);
   }
@@ -427,14 +476,40 @@ recordVideoButton.addEventListener("click", startWishRecording);
 stopRecordingButton.addEventListener("click", stopWishRecording);
 clearCaptureButton.addEventListener("click", () => {
   clearCapturedWishMedia();
-  setWishCameraFeedback("Da xoa ban ghi tam.");
+  setWishCameraFeedback("Đã xóa bản ghi tạm.");
 });
-wishVideoInput.addEventListener("change", () => {
+
+wishFileInput.addEventListener("change", () => {
   capturedWishVideoFile = null;
   capturedWishImageFile = null;
-  setWishCameraFeedback(wishVideoInput.files?.length ? "Da chon video tu may." : "");
+  const selectedFile = wishFileInput.files?.[0];
+  const selectedMediaKind = detectSelectedMediaKind(selectedFile);
+
+  if (!selectedFile) {
+    wishImagePreview.hidden = true;
+    wishImagePreview.removeAttribute("src");
+    setWishCameraFeedback("");
+    updateWishCaptureButtons();
+    return;
+  }
+
+  if (selectedMediaKind === "image") {
+    wishImagePreview.src = URL.createObjectURL(selectedFile);
+    wishImagePreview.hidden = false;
+    setWishCameraFeedback("Đã chọn ảnh từ máy.");
+  } else if (selectedMediaKind === "video") {
+    wishImagePreview.hidden = true;
+    wishImagePreview.removeAttribute("src");
+    setWishCameraFeedback("Đã chọn video từ máy.");
+  } else {
+    wishImagePreview.hidden = true;
+    wishImagePreview.removeAttribute("src");
+    setWishCameraFeedback("Không nhận diện được định dạng file. Hãy chọn ảnh hoặc video phổ biến.");
+  }
+
   updateWishCaptureButtons();
 });
+
 window.addEventListener("beforeunload", stopWishCamera);
 updateWishCaptureButtons();
 
@@ -455,7 +530,7 @@ async function loadInvitation() {
     const payload = await response.json();
 
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || "Khong tai duoc du lieu thiep.");
+      throw new Error(payload.message || "Không tải được dữ liệu thiệp.");
     }
 
     invitationData = payload.data;

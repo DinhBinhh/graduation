@@ -28,10 +28,19 @@ export async function uploadToCloudinary(filePath, type) {
   }
 
   try {
-    const result = await cloudinary.uploader.upload(filePath, {
+    const resourceType = getCloudinaryResourceType(type);
+    const options = {
       folder: getCloudinaryFolder(type),
-      resource_type: getCloudinaryResourceType(type)
-    });
+      resource_type: resourceType === "image" ? "auto" : resourceType
+    };
+
+    const result =
+      resourceType === "video"
+        ? await cloudinary.uploader.upload_large(filePath, {
+            ...options,
+            chunk_size: 6 * 1024 * 1024
+          })
+        : await cloudinary.uploader.upload(filePath, options);
 
     return result.secure_url;
   } finally {

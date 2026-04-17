@@ -285,6 +285,21 @@ function App() {
     }
   }
 
+  function getMediaProxyUrl(url, { download = false, fallbackName = "media-file" } = {}) {
+    if (!url) return "#";
+
+    const params = new URLSearchParams({
+      src: url
+    });
+
+    if (download) {
+      params.set("download", "1");
+      params.set("name", getDownloadName(url, fallbackName));
+    }
+
+    return `/api/media?${params.toString()}`;
+  }
+
   const normalizedWishKeyword = wishKeyword.trim().toLowerCase();
   const filteredWishes = wishes.filter((wish) => {
     const matchesInvitation =
@@ -569,12 +584,20 @@ function App() {
                       <td>
                         {wish.imageUrl ? (
                           <div className="table-actions">
-                            <a className="secondary-button" href={wish.imageUrl} target="_blank" rel="noreferrer">
+                            <a
+                              className="secondary-button"
+                              href={getMediaProxyUrl(wish.imageUrl)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               Xem ảnh
                             </a>
                             <a
                               className="secondary-button"
-                              href={wish.imageUrl}
+                              href={getMediaProxyUrl(wish.imageUrl, {
+                                download: true,
+                                fallbackName: `wish-image-${wish.id}.jpg`
+                              })}
                               download={getDownloadName(wish.imageUrl, `wish-image-${wish.id}.jpg`)}
                             >
                               Tải ảnh
@@ -587,12 +610,20 @@ function App() {
                       <td>
                         {wish.videoUrl ? (
                           <div className="table-actions">
-                            <a className="secondary-button" href={wish.videoUrl} target="_blank" rel="noreferrer">
+                            <a
+                              className="secondary-button"
+                              href={getMediaProxyUrl(wish.videoUrl)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               Xem video
                             </a>
                             <a
                               className="secondary-button"
-                              href={wish.videoUrl}
+                              href={getMediaProxyUrl(wish.videoUrl, {
+                                download: true,
+                                fallbackName: `wish-video-${wish.id}.mp4`
+                              })}
                               download={getDownloadName(wish.videoUrl, `wish-video-${wish.id}.mp4`)}
                             >
                               Tải video

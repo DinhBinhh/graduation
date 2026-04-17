@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thiep Moi</title>
+    <title>Thiệp Mời</title>
     <link rel="stylesheet" href="./styles.css" />
     <script defer src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
     <script defer src="./ambient.js"></script>
@@ -60,51 +60,51 @@
       <div id="wand-lottie" class="wand-lottie"></div>
     </div>
     <main class="card-stage">
-      <a class="back-link" href="/">Quay lai</a>
+      <a class="back-link" href="/">Quay lại</a>
       <div class="card-container" id="card-container">
         <div class="card-inside">
-          <img id="card-image" class="card-image" alt="Thiep tot nghiep" />
+          <img id="card-image" class="card-image" alt="Thiệp tốt nghiệp" />
           <div class="card-copy">
             <p class="eyebrow">Invitation</p>
             <h2 id="inside-name"></h2>
             <p id="inside-note">
-              Cam on ban da dong hanh trong chang duong tot nghiep. Su hien dien cua ban se la
-              niem vui rat lon trong ngay dac biet nay.
+              Cảm ơn bạn đã đồng hành trong chặng đường tốt nghiệp. Sự hiện diện của bạn sẽ là
+              niềm vui rất lớn trong ngày đặc biệt này.
             </p>
           </div>
         </div>
 
         <div class="card-cover" id="card-cover">
-          <img id="cover-image" class="card-cover__image" alt="Bia thiep" hidden />
+          <img id="cover-image" class="card-cover__image" alt="Bìa thiệp" hidden />
           <div id="cover-fallback" class="card-cover__front" aria-hidden="true"></div>
         </div>
       </div>
       <div class="card-actions">
-        <button id="download-card-button" class="secondary-button" type="button">Tai thiep</button>
+        <button id="download-card-button" class="secondary-button" type="button">Tải thiệp</button>
       </div>
       <p id="card-feedback" class="feedback" aria-live="polite"></p>
 
       <section class="wish-panel">
         <div class="wish-panel__copy">
-          <p class="eyebrow">Gui loi chuc</p>
-          <h2>De lai mot loi nhan cho chu nhan tam thiep</h2>
+          <p class="eyebrow">Gửi lời chúc</p>
+          <h2>Để lại một lời nhắn cho chủ nhân tấm thiệp</h2>
         </div>
         <form id="wish-form" class="wish-form">
           <div class="wish-form__grid">
-            <input id="wish-sender-name" name="senderName" type="text" placeholder="Ten cua ban (tuy chon)" />
-            <input id="wish-video-input" name="wishVideo" type="file" accept="video/*" />
+            <input id="wish-sender-name" name="senderName" type="text" placeholder="Tên của bạn (tùy chọn)" />
+            <input id="wish-file-input" name="wishFile" type="file" accept="image/*,video/*" />
           </div>
           <div class="wish-camera">
             <div class="wish-camera__preview-shell">
               <video id="wish-camera-preview" class="wish-camera__preview" playsinline muted hidden></video>
-              <img id="wish-image-preview" class="wish-camera__preview" alt="Anh vua chup" hidden />
+              <img id="wish-image-preview" class="wish-camera__preview" alt="Ảnh vừa chụp" hidden />
             </div>
             <div class="wish-camera__actions">
-              <button id="start-camera-button" class="secondary-button" type="button">Mo camera</button>
-              <button id="capture-photo-button" class="secondary-button" type="button" disabled>Chup hinh</button>
+              <button id="start-camera-button" class="secondary-button" type="button">Mở camera</button>
+              <button id="capture-photo-button" class="secondary-button" type="button" disabled>Chụp hình</button>
               <button id="record-video-button" class="secondary-button" type="button" disabled>Quay video</button>
-              <button id="stop-recording-button" class="secondary-button" type="button" disabled>Dung quay</button>
-              <button id="clear-capture-button" class="secondary-button" type="button" disabled>Xoa ban ghi</button>
+              <button id="stop-recording-button" class="secondary-button" type="button" disabled>Dừng quay</button>
+              <button id="clear-capture-button" class="secondary-button" type="button" disabled>Xóa bản ghi</button>
             </div>
             <p id="wish-camera-feedback" class="feedback" aria-live="polite"></p>
           </div>
@@ -112,18 +112,25 @@
             id="wish-message"
             name="message"
             rows="5"
-            placeholder="Viet loi chuc cua ban o day"
+            placeholder="Viết lời chúc của bạn ở đây"
           ></textarea>
           <div class="wish-form__actions">
-            <button class="primary-button" type="submit">Gui loi chuc</button>
+            <button class="primary-button" type="submit">Gửi lời chúc</button>
           </div>
           <p id="wish-feedback" class="feedback" aria-live="polite"></p>
         </form>
       </section>
+
+      <p class="more-cards-link">
+        Bạn có thể xem thêm thiệp mọi người ở đây:
+        <a href="http://graduation-zpcg.onrender.com/" target="_blank" rel="noreferrer">
+          http://graduation-zpcg.onrender.com/
+        </a>
+      </p>
     </main>
 
     <div id="scare-overlay" class="scare-overlay" aria-hidden="true">
-      <button id="skip-scare-button" class="skip-scare-button" type="button">Tat video</button>
+      <button id="skip-scare-button" class="skip-scare-button" type="button">Tắt video</button>
       <div class="scare-video-frame">
         <video
           id="scare-video"
@@ -136,7 +143,7 @@
     </div>
 
     <button id="music-toggle" class="music-toggle" type="button" aria-pressed="true">
-      Tat nhac
+      Tắt nhạc
     </button>
     <audio id="bg-music" loop preload="auto">
       <source src="/uploads/videos/nhacnen.mp3" type="audio/mpeg" />
