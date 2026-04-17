@@ -17,6 +17,25 @@ function setFeedback(element, message) {
   element.textContent = message;
 }
 
+async function readJsonSafely(response) {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch (error) {
+    return {
+      success: false,
+      message: response.ok
+        ? "May chu tra ve du lieu khong hop le."
+        : `May chu dang loi (${response.status}). Vui long thu lai sau.`
+    };
+  }
+}
+
 function getAudioContext() {
   if (!audioContext) {
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -71,7 +90,7 @@ async function loginAdmin(username, password) {
     })
   });
 
-  const payload = await response.json();
+  const payload = await readJsonSafely(response);
   if (!response.ok || !payload.success) {
     throw new Error(payload.message || "Dang nhap that bai");
   }
@@ -109,7 +128,7 @@ form.addEventListener("submit", async (event) => {
       ? `name=${encodeURIComponent(name)}&owner=${encodeURIComponent(lookupOwner)}`
       : `name=${encodeURIComponent(name)}`;
     const response = await fetch(`/api/invitation?${query}`);
-    const payload = await response.json();
+    const payload = await readJsonSafely(response);
 
     if (!response.ok || !payload.success) {
       throw new Error(payload.message || "Khong tim thay thiep.");

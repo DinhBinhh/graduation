@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import multer from "multer";
 import pool from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
@@ -44,6 +45,14 @@ app.use("/admin", express.static(path.join(frontendDir, "admin")));
 app.use("/", express.static(path.join(frontendDir, "user")));
 
 app.use((error, _, res, __) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return fail(res, "File upload qua lon. Vui long giam kich thuoc xuong duoi 80MB.", 413);
+    }
+
+    return fail(res, error.message || "Upload file that bai", 400);
+  }
+
   return fail(res, error.message || "Internal server error", 500);
 });
 

@@ -40,7 +40,10 @@ function fileFilter(_, file, cb) {
 
 export const uploadInvitationAssets = multer({
   storage: createStorage("temp"),
-  fileFilter
+  fileFilter,
+  limits: {
+    fileSize: 80 * 1024 * 1024
+  }
 }).fields([
   { name: "coverImage", maxCount: 1 },
   { name: "cardImage", maxCount: 1 },
@@ -49,7 +52,10 @@ export const uploadInvitationAssets = multer({
 
 export const uploadWishVideo = multer({
   storage: createStorage("temp"),
-  fileFilter
+  fileFilter,
+  limits: {
+    fileSize: 80 * 1024 * 1024
+  }
 }).fields([
   { name: "wishVideo", maxCount: 1 },
   { name: "wishImage", maxCount: 1 }

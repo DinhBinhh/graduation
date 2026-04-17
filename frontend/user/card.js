@@ -42,6 +42,25 @@ function setFeedback(message) {
   cardFeedback.textContent = message;
 }
 
+async function readJsonSafely(response) {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch (error) {
+    return {
+      success: false,
+      message: response.ok
+        ? "May chu tra ve du lieu khong hop le."
+        : `May chu dang loi (${response.status}). Vui long thu lai sau.`
+    };
+  }
+}
+
 function setInvitationReadyState(isReady) {
   invitationAssetsReady = isReady;
   cardContainer.classList.toggle("is-loading", !isReady);
@@ -452,7 +471,7 @@ async function submitWish(event) {
       method: "POST",
       body: formData
     });
-    const payload = await response.json();
+    const payload = await readJsonSafely(response);
 
     if (!response.ok || !payload.success) {
       throw new Error(payload.message || "Gửi lời chúc thất bại.");
@@ -527,7 +546,7 @@ async function loadInvitation() {
       ? `slug=${encodeURIComponent(invitationSlug)}`
       : `name=${encodeURIComponent(guestName)}`;
     const response = await fetch(`/api/invitation?${query}`);
-    const payload = await response.json();
+    const payload = await readJsonSafely(response);
 
     if (!response.ok || !payload.success) {
       throw new Error(payload.message || "Không tải được dữ liệu thiệp.");

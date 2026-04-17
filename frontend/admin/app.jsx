@@ -38,6 +38,25 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  async function readJsonSafely(response) {
+    const rawText = await response.text();
+
+    if (!rawText) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawText);
+    } catch (error) {
+      return {
+        success: false,
+        message: response.ok
+          ? "May chu tra ve du lieu khong hop le."
+          : `May chu dang loi (${response.status}). Vui long thu lai sau.`
+      };
+    }
+  }
+
   async function api(path, options = {}) {
     const response = await fetch(path, {
       ...options,
@@ -47,7 +66,7 @@ function App() {
       }
     });
 
-    const payload = await response.json();
+    const payload = await readJsonSafely(response);
     if (!response.ok || !payload.success) {
       throw new Error(payload.message || "Yêu cầu thất bại");
     }

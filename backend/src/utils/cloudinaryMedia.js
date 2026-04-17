@@ -24,25 +24,26 @@ function getCloudinaryResourceType(type) {
 
 export async function uploadToCloudinary(filePath, type) {
   if (!isCloudinaryConfigured()) {
-    throw new Error("Cloudinary chưa được cấu hình.");
+    throw new Error("Cloudinary chua duoc cau hinh.");
   }
 
   try {
+    await fs.access(filePath);
+
     const resourceType = getCloudinaryResourceType(type);
     const options = {
       folder: getCloudinaryFolder(type),
       resource_type: resourceType === "image" ? "auto" : resourceType
     };
-
-    const result =
-      resourceType === "video"
-        ? await cloudinary.uploader.upload_large(filePath, {
-            ...options,
-            chunk_size: 6 * 1024 * 1024
-          })
-        : await cloudinary.uploader.upload(filePath, options);
+    const result = await cloudinary.uploader.upload(filePath, options);
 
     return result.secure_url;
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error("Khong tim thay file tam de upload. Vui long thu lai video jumpscare.");
+    }
+
+    throw error;
   } finally {
     await fs.unlink(filePath).catch(() => {});
   }
